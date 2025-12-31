@@ -1,0 +1,7 @@
+{
+  "name": "Panasonic Blu-ray Player",
+  "hacs": "1.34.0",
+  "domains": ["remote", "media_player"],
+  "iot_class": "Local Polling",
+  "homeassistant": "2024.1.0"
+}

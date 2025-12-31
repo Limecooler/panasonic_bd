@@ -1,0 +1,36 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Panasonic Blu-ray Player",
+        "description": "Enter the IP address of your Panasonic Blu-ray player. For UHD models (DP-UB series), you may need a player key for remote control commands.",
+        "data": {
+          "host": "IP Address",
+          "name": "Device Name",
+          "player_key": "Player Key (UHD models only)"
+        },
+        "data_description": {
+          "host": "IP address of your Blu-ray player (e.g., 192.168.1.100)",
+          "name": "Friendly name for this player",
+          "player_key": "32-character authentication key for UHD players"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate Panasonic Blu-ray Player",
+        "description": "The player at {host} requires re-authentication. Please enter the player key.",
+        "data": {
+          "player_key": "Player Key"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to device. Ensure it's on the same subnet and Remote Device Operation is enabled in player settings.",
+      "invalid_auth": "Invalid player key for UHD model.",
+      "unknown": "An unexpected error occurred."
+    },
+    "abort": {
+      "already_configured": "This device is already configured.",
+      "reauth_successful": "Re-authentication was successful."
+    }
+  }
+}
