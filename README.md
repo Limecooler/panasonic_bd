@@ -129,16 +129,49 @@ Each player will appear as a separate device with its own entities:
 
 ### UHD Authentication
 
-UHD players (DP-UB series) require authentication for remote control commands. You have two options:
+UHD players (DP-UB series) require authentication for remote control commands. This is unfortunately complicated due to Panasonic discontinuing their Voice Control service.
 
-**Option 1: Patched Firmware**
-- Players with modified firmware do not require a player key
-- See [AVForums](https://www.avsforum.com/forums/blu-ray-dvd-player-multiregion-hacks.126/) for information
+#### Background
+
+Panasonic's Voice Control service, which enabled IP-based remote control, was **discontinued on June 13, 2023** for DP-UB9000, DP-UB820, and DP-UB420 models. Without this service or an alternative, UHD players cannot receive remote commands over the network.
+
+#### What Works Without Authentication
+
+Even without a player key, the integration can still:
+- Monitor playback state (playing, paused, stopped)
+- Track elapsed playback time
+- Detect when the player is on/off
+
+This enables automations like dimming lights when playback starts.
+
+#### What Requires Authentication
+
+Sending commands (play, pause, power, menu navigation, etc.) requires either:
+
+**Option 1: Patched Firmware (Recommended)**
+
+Players with modified/patched firmware do not require a player key. These are typically:
+- Players purchased pre-modified from certain retailers
+- Players with community firmware patches applied
+
+Resources:
+- [AVForums Region Freedom Thread](https://www.avforums.com/threads/lets-try-again-to-put-the-free-in-regionfreedom.2441584/) - Ongoing community effort to create universal patched firmware
+- [AVS Forum UB820 Owner's Thread](https://www.avsforum.com/threads/official-panasonic-dp-ub820-824-owners-thread-no-price-talk.2990966/) - Discussions about IP control and firmware options
+
+> **Note**: Modifying firmware carries risks. Some users have bricked their players attempting modifications. The community is working on making this safer, but proceed with caution.
 
 **Option 2: Player Key**
-- If you have a player key, enter it during configuration
-- The key is a 32-character hexadecimal string
-- Contact the community for assistance obtaining a key
+
+If you have obtained a player key through other means:
+- Enter the 32-character hexadecimal key during configuration
+- The key is specific to your player
+
+#### Current Limitations
+
+Due to the discontinuation of Voice Control:
+- There is no official way to obtain a player key for new setups
+- Extracting keys requires technical expertise and risks bricking the device
+- Community efforts to create universal solutions are ongoing but incomplete
 
 ## Usage
 
