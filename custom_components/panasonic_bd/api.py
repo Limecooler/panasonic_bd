@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import gzip
 import logging
 from dataclasses import dataclass
 from typing import Any
@@ -155,7 +156,24 @@ class PanasonicBlurayApi:
                             f"Unexpected status code: {response.status}"
                         )
 
-                    text = await response.text()
+                    # Read response as bytes to handle potential gzip compression
+                    raw_bytes = await response.read()
+
+                    # Check if response is gzip compressed (magic bytes 0x1f 0x8b)
+                    if len(raw_bytes) >= 2 and raw_bytes[0:2] == b'\x1f\x8b':
+                        try:
+                            raw_bytes = gzip.decompress(raw_bytes)
+                        except (gzip.BadGzipFile, EOFError, OSError):
+                            _LOGGER.debug("Failed to decompress gzip response")
+                            return ("error", None)
+
+                    # Decode as text
+                    try:
+                        text = raw_bytes.decode("utf-8")
+                    except UnicodeDecodeError:
+                        # Try latin-1 as fallback
+                        text = raw_bytes.decode("latin-1")
+
                     lines = text.strip().split("\r\n")
 
                     _LOGGER.debug("Response: %s", lines)

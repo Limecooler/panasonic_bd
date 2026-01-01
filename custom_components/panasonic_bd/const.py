@@ -8,7 +8,7 @@ from typing import Final
 # Integration info
 DOMAIN: Final = "panasonic_bd"
 NAME: Final = "Panasonic Blu-ray Player"
-VERSION: Final = "1.0.0"
+VERSION: Final = "1.0.1"
 
 # Configuration
 CONF_PLAYER_KEY: Final = "player_key"

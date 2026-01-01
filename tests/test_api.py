@@ -110,7 +110,7 @@ class TestSendRequest:
         """Test successful request with data line."""
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.text = AsyncMock(return_value='00,"OK",1\r\n0,100,200')
+        mock_response.read = AsyncMock(return_value=b'00,"OK",1\r\n0,100,200')
         mock_response.__aenter__ = AsyncMock(return_value=mock_response)
         mock_response.__aexit__ = AsyncMock(return_value=None)
 
@@ -126,7 +126,7 @@ class TestSendRequest:
         """Test successful request without data line."""
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.text = AsyncMock(return_value='00,"OK",1')
+        mock_response.read = AsyncMock(return_value=b'00,"OK",1')
         mock_response.__aenter__ = AsyncMock(return_value=mock_response)
         mock_response.__aexit__ = AsyncMock(return_value=None)
 
@@ -142,7 +142,7 @@ class TestSendRequest:
         """Test request with FE error response."""
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.text = AsyncMock(return_value='FE,"Error",0')
+        mock_response.read = AsyncMock(return_value=b'FE,"Error",0')
         mock_response.__aenter__ = AsyncMock(return_value=mock_response)
         mock_response.__aexit__ = AsyncMock(return_value=None)
 
@@ -158,7 +158,7 @@ class TestSendRequest:
         """Test request with non-00 status response."""
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.text = AsyncMock(return_value='01,"Error",0')
+        mock_response.read = AsyncMock(return_value=b'01,"Error",0')
         mock_response.__aenter__ = AsyncMock(return_value=mock_response)
         mock_response.__aexit__ = AsyncMock(return_value=None)
 
@@ -173,7 +173,7 @@ class TestSendRequest:
         """Test request with empty response."""
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.text = AsyncMock(return_value='')
+        mock_response.read = AsyncMock(return_value=b'')
         mock_response.__aenter__ = AsyncMock(return_value=mock_response)
         mock_response.__aexit__ = AsyncMock(return_value=None)
 
@@ -189,8 +189,8 @@ class TestSendRequest:
         mock_response = AsyncMock()
         mock_response.status = 200
         # After strip() this becomes empty, split gives [''] which is truthy
-        # To get an empty list, we need to mock the behavior differently
-        mock_response.text = AsyncMock(return_value='   \r\n   ')
+        # So this will hit the first_line parsing which may fail
+        mock_response.read = AsyncMock(return_value=b'   \r\n   ')
         mock_response.__aenter__ = AsyncMock(return_value=mock_response)
         mock_response.__aexit__ = AsyncMock(return_value=None)
 
@@ -202,6 +202,44 @@ class TestSendRequest:
             # After strip and split, we get [''] which is truthy
             # So this will hit the first_line parsing which may fail
             assert status == "error"
+
+    async def test_send_request_gzip_response(self, api):
+        """Test request with gzip-compressed response."""
+        import gzip
+        compressed = gzip.compress(b'00,"OK",1\r\n1,120,200')
+
+        mock_response = AsyncMock()
+        mock_response.status = 200
+        mock_response.read = AsyncMock(return_value=compressed)
+        mock_response.__aenter__ = AsyncMock(return_value=mock_response)
+        mock_response.__aexit__ = AsyncMock(return_value=None)
+
+        mock_session = MagicMock()
+        mock_session.post = MagicMock(return_value=mock_response)
+
+        with patch.object(api, "_get_session", return_value=mock_session):
+            status, data = await api._send_request("test_data")
+            assert status == "ok"
+            assert data == ["1", "120", "200"]
+
+    async def test_send_request_bad_gzip_response(self, api):
+        """Test request with invalid gzip data (starts with gzip magic but corrupt)."""
+        # Gzip magic bytes followed by garbage
+        bad_gzip = b'\x1f\x8b\x08\x00invalid'
+
+        mock_response = AsyncMock()
+        mock_response.status = 200
+        mock_response.read = AsyncMock(return_value=bad_gzip)
+        mock_response.__aenter__ = AsyncMock(return_value=mock_response)
+        mock_response.__aexit__ = AsyncMock(return_value=None)
+
+        mock_session = MagicMock()
+        mock_session.post = MagicMock(return_value=mock_response)
+
+        with patch.object(api, "_get_session", return_value=mock_session):
+            status, data = await api._send_request("test_data")
+            assert status == "error"
+            assert data is None
 
     async def test_send_request_404_error(self, api):
         """Test request with 404 response."""
