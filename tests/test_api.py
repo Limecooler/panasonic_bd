@@ -8,13 +8,13 @@ import pytest
 import aiohttp
 from aiohttp import ClientError
 
-from custom_components.panasonic_bluray.api import (
+from custom_components.panasonic_bd.api import (
     PanasonicBlurayApi,
     CannotConnect,
     CommandResult,
     PlayStatus,
 )
-from custom_components.panasonic_bluray.const import PlayerType, PlayerStatus
+from custom_components.panasonic_bd.const import PlayerType, PlayerStatus
 
 
 @pytest.fixture

@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Final
 
 # Integration info
-DOMAIN: Final = "panasonic_bluray"
+DOMAIN: Final = "panasonic_bd"
 NAME: Final = "Panasonic Blu-ray Player"
 VERSION: Final = "1.0.0"
 

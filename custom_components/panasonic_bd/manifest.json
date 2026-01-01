@@ -1,13 +1,13 @@
 {
-  "domain": "panasonic_bluray",
+  "domain": "panasonic_bd",
   "name": "Panasonic Blu-ray Player",
   "codeowners": ["@Limecooler"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/Limecooler/panasonic_bluray",
+  "documentation": "https://github.com/Limecooler/panasonic_bd",
   "iot_class": "local_polling",
   "integration_type": "device",
-  "issue_tracker": "https://github.com/Limecooler/panasonic_bluray/issues",
+  "issue_tracker": "https://github.com/Limecooler/panasonic_bd/issues",
   "requirements": [],
   "version": "1.0.0"
 }

@@ -9,8 +9,8 @@ from homeassistant.config_entries import ConfigEntryState
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.panasonic_bluray.const import DOMAIN, PlayerType
-from custom_components.panasonic_bluray.coordinator import PanasonicBlurayData
+from custom_components.panasonic_bd.const import DOMAIN, PlayerType
+from custom_components.panasonic_bd.coordinator import PanasonicBlurayData
 
 
 @pytest.fixture(autouse=True)
@@ -46,10 +46,10 @@ async def test_setup_entry(hass: HomeAssistant, mock_api) -> None:
     entry.add_to_hass(hass)
 
     with patch(
-        "custom_components.panasonic_bluray.PanasonicBlurayApi",
+        "custom_components.panasonic_bd.PanasonicBlurayApi",
         return_value=mock_api,
     ), patch(
-        "custom_components.panasonic_bluray.coordinator.PanasonicBlurayCoordinator.async_config_entry_first_refresh",
+        "custom_components.panasonic_bd.coordinator.PanasonicBlurayCoordinator.async_config_entry_first_refresh",
         new_callable=AsyncMock,
     ):
         await hass.config_entries.async_setup(entry.entry_id)
@@ -70,10 +70,10 @@ async def test_unload_entry(hass: HomeAssistant, mock_api) -> None:
     entry.add_to_hass(hass)
 
     with patch(
-        "custom_components.panasonic_bluray.PanasonicBlurayApi",
+        "custom_components.panasonic_bd.PanasonicBlurayApi",
         return_value=mock_api,
     ), patch(
-        "custom_components.panasonic_bluray.coordinator.PanasonicBlurayCoordinator.async_config_entry_first_refresh",
+        "custom_components.panasonic_bd.coordinator.PanasonicBlurayCoordinator.async_config_entry_first_refresh",
         new_callable=AsyncMock,
     ):
         await hass.config_entries.async_setup(entry.entry_id)
@@ -101,10 +101,10 @@ async def test_setup_entry_connection_failure(hass: HomeAssistant) -> None:
     mock_api.close = AsyncMock()
 
     with patch(
-        "custom_components.panasonic_bluray.PanasonicBlurayApi",
+        "custom_components.panasonic_bd.PanasonicBlurayApi",
         return_value=mock_api,
     ), patch(
-        "custom_components.panasonic_bluray.coordinator.PanasonicBlurayCoordinator.async_config_entry_first_refresh",
+        "custom_components.panasonic_bd.coordinator.PanasonicBlurayCoordinator.async_config_entry_first_refresh",
         new_callable=AsyncMock,
         side_effect=Exception("Connection failed"),
     ):
@@ -124,10 +124,10 @@ async def test_reload_entry(hass: HomeAssistant, mock_api) -> None:
     entry.add_to_hass(hass)
 
     with patch(
-        "custom_components.panasonic_bluray.PanasonicBlurayApi",
+        "custom_components.panasonic_bd.PanasonicBlurayApi",
         return_value=mock_api,
     ), patch(
-        "custom_components.panasonic_bluray.coordinator.PanasonicBlurayCoordinator.async_config_entry_first_refresh",
+        "custom_components.panasonic_bd.coordinator.PanasonicBlurayCoordinator.async_config_entry_first_refresh",
         new_callable=AsyncMock,
     ):
         await hass.config_entries.async_setup(entry.entry_id)
@@ -136,7 +136,7 @@ async def test_reload_entry(hass: HomeAssistant, mock_api) -> None:
         assert entry.state == ConfigEntryState.LOADED
 
         # Trigger reload via update listener
-        from custom_components.panasonic_bluray import async_reload_entry
+        from custom_components.panasonic_bd import async_reload_entry
 
         await async_reload_entry(hass, entry)
         await hass.async_block_till_done()

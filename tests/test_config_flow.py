@@ -10,7 +10,7 @@ from homeassistant.data_entry_flow import FlowResultType
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.panasonic_bluray.const import DOMAIN, PlayerType
+from custom_components.panasonic_bd.const import DOMAIN, PlayerType
 
 
 async def test_form_user(hass: HomeAssistant, mock_api, mock_setup_entry) -> None:
@@ -137,7 +137,7 @@ async def test_form_already_configured(
 async def test_form_unknown_error(hass: HomeAssistant, mock_setup_entry) -> None:
     """Test we handle unknown error."""
     with patch(
-        "custom_components.panasonic_bluray.config_flow.PanasonicBlurayApi"
+        "custom_components.panasonic_bd.config_flow.PanasonicBlurayApi"
     ) as mock_api_class:
         mock_instance = MagicMock()
         mock_instance.async_test_connection = AsyncMock(side_effect=Exception("Boom"))
@@ -221,7 +221,7 @@ async def test_form_uhd_without_player_key(
 ) -> None:
     """Test UHD player detection without player key logs warning."""
     with patch(
-        "custom_components.panasonic_bluray.config_flow.PanasonicBlurayApi"
+        "custom_components.panasonic_bd.config_flow.PanasonicBlurayApi"
     ) as mock_api_class:
         mock_instance = MagicMock()
         mock_instance.async_test_connection = AsyncMock(return_value=True)
@@ -252,7 +252,7 @@ async def test_reauth_cannot_connect(
     hass: HomeAssistant, mock_setup_entry
 ) -> None:
     """Test reauth flow with connection error."""
-    from custom_components.panasonic_bluray.api import CannotConnect
+    from custom_components.panasonic_bd.api import CannotConnect
 
     entry = MockConfigEntry(
         domain=DOMAIN,
@@ -263,7 +263,7 @@ async def test_reauth_cannot_connect(
     entry.add_to_hass(hass)
 
     with patch(
-        "custom_components.panasonic_bluray.config_flow.PanasonicBlurayApi"
+        "custom_components.panasonic_bd.config_flow.PanasonicBlurayApi"
     ) as mock_api_class:
         mock_instance = MagicMock()
         mock_instance.async_test_connection = AsyncMock(return_value=False)
@@ -292,7 +292,7 @@ async def test_reauth_invalid_auth(
     hass: HomeAssistant, mock_setup_entry
 ) -> None:
     """Test reauth flow with invalid auth error."""
-    from custom_components.panasonic_bluray.api import InvalidAuth
+    from custom_components.panasonic_bd.api import InvalidAuth
 
     entry = MockConfigEntry(
         domain=DOMAIN,
@@ -303,7 +303,7 @@ async def test_reauth_invalid_auth(
     entry.add_to_hass(hass)
 
     with patch(
-        "custom_components.panasonic_bluray.config_flow.PanasonicBlurayApi"
+        "custom_components.panasonic_bd.config_flow.PanasonicBlurayApi"
     ) as mock_api_class:
         mock_instance = MagicMock()
         mock_instance.async_test_connection = AsyncMock(return_value=True)
@@ -342,7 +342,7 @@ async def test_reauth_unknown_error(
     entry.add_to_hass(hass)
 
     with patch(
-        "custom_components.panasonic_bluray.config_flow.PanasonicBlurayApi"
+        "custom_components.panasonic_bd.config_flow.PanasonicBlurayApi"
     ) as mock_api_class:
         mock_instance = MagicMock()
         mock_instance.async_test_connection = AsyncMock(side_effect=Exception("Boom"))

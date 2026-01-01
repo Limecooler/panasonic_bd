@@ -8,10 +8,10 @@ import pytest
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.panasonic_bluray.const import DOMAIN, COMMANDS, PlayerType
-from custom_components.panasonic_bluray.coordinator import PanasonicBlurayData
-from custom_components.panasonic_bluray.remote import PanasonicBlurayRemote
-from custom_components.panasonic_bluray.api import CommandResult
+from custom_components.panasonic_bd.const import DOMAIN, COMMANDS, PlayerType
+from custom_components.panasonic_bd.coordinator import PanasonicBlurayData
+from custom_components.panasonic_bd.remote import PanasonicBlurayRemote
+from custom_components.panasonic_bd.api import CommandResult
 
 
 @pytest.fixture

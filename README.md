@@ -1,7 +1,7 @@
 # Panasonic Blu-ray Player Integration for Home Assistant
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
-[![GitHub Release](https://img.shields.io/github/release/Limecooler/panasonic_bluray.svg)](https://github.com/Limecooler/panasonic_bluray/releases)
+[![GitHub Release](https://img.shields.io/github/release/Limecooler/panasonic_bd.svg)](https://github.com/Limecooler/panasonic_bd/releases)
 
 Control your Panasonic Blu-ray player from Home Assistant with full remote control functionality.
 
@@ -87,7 +87,7 @@ In addition to the above steps:
 2. Click on **Integrations**
 3. Click the **three dots** menu in the top right corner
 4. Select **Custom repositories**
-5. Add the repository URL: `https://github.com/Limecooler/panasonic_bluray`
+5. Add the repository URL: `https://github.com/Limecooler/panasonic_bd`
 6. Select **Integration** as the category
 7. Click **Add**
 8. Search for "Panasonic Blu-ray" and click **Download**
@@ -95,8 +95,8 @@ In addition to the above steps:
 
 ### Manual Installation
 
-1. Download the latest release from [GitHub Releases](https://github.com/Limecooler/panasonic_bluray/releases)
-2. Extract the `panasonic_bluray` folder
+1. Download the latest release from [GitHub Releases](https://github.com/Limecooler/panasonic_bd/releases)
+2. Extract the `panasonic_bd` folder
 3. Copy it to your `config/custom_components/` directory
 4. Restart Home Assistant
 

@@ -10,9 +10,9 @@ from homeassistant.core import HomeAssistant
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.panasonic_bluray.const import DOMAIN, PlayerType
-from custom_components.panasonic_bluray.coordinator import PanasonicBlurayData
-from custom_components.panasonic_bluray.media_player import (
+from custom_components.panasonic_bd.const import DOMAIN, PlayerType
+from custom_components.panasonic_bd.coordinator import PanasonicBlurayData
+from custom_components.panasonic_bd.media_player import (
     PanasonicBlurayMediaPlayer,
     STATE_MAP,
 )

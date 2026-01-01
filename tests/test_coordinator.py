@@ -8,12 +8,12 @@ import pytest
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
-from custom_components.panasonic_bluray.coordinator import (
+from custom_components.panasonic_bd.coordinator import (
     PanasonicBlurayCoordinator,
     PanasonicBlurayData,
 )
-from custom_components.panasonic_bluray.api import PlayStatus, CommandResult
-from custom_components.panasonic_bluray.const import PlayerType, PlayerStatus
+from custom_components.panasonic_bd.api import PlayStatus, CommandResult
+from custom_components.panasonic_bd.const import PlayerType, PlayerStatus
 
 
 @pytest.fixture

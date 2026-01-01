@@ -11,7 +11,7 @@ import pytest
 # Add the custom_components directory to the path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from custom_components.panasonic_bluray.const import DOMAIN, PlayerType
+from custom_components.panasonic_bd.const import DOMAIN, PlayerType
 
 
 @pytest.fixture(autouse=True)
@@ -24,7 +24,7 @@ def auto_enable_custom_integrations(enable_custom_integrations):
 def mock_setup_entry() -> Generator[AsyncMock, None, None]:
     """Mock setting up a config entry."""
     with patch(
-        "custom_components.panasonic_bluray.async_setup_entry",
+        "custom_components.panasonic_bd.async_setup_entry",
         return_value=True,
     ) as mock_setup:
         yield mock_setup
@@ -34,7 +34,7 @@ def mock_setup_entry() -> Generator[AsyncMock, None, None]:
 def mock_api() -> Generator[MagicMock, None, None]:
     """Mock the PanasonicBlurayApi."""
     with patch(
-        "custom_components.panasonic_bluray.config_flow.PanasonicBlurayApi"
+        "custom_components.panasonic_bd.config_flow.PanasonicBlurayApi"
     ) as mock_api_class:
         mock_instance = MagicMock()
         mock_instance.async_test_connection = AsyncMock(return_value=True)
@@ -48,7 +48,7 @@ def mock_api() -> Generator[MagicMock, None, None]:
 def mock_api_cannot_connect() -> Generator[MagicMock, None, None]:
     """Mock the PanasonicBlurayApi with connection failure."""
     with patch(
-        "custom_components.panasonic_bluray.config_flow.PanasonicBlurayApi"
+        "custom_components.panasonic_bd.config_flow.PanasonicBlurayApi"
     ) as mock_api_class:
         mock_instance = MagicMock()
         mock_instance.async_test_connection = AsyncMock(return_value=False)
@@ -60,10 +60,10 @@ def mock_api_cannot_connect() -> Generator[MagicMock, None, None]:
 @pytest.fixture
 def mock_api_invalid_auth() -> Generator[MagicMock, None, None]:
     """Mock the PanasonicBlurayApi with auth failure."""
-    from custom_components.panasonic_bluray.api import InvalidAuth
+    from custom_components.panasonic_bd.api import InvalidAuth
 
     with patch(
-        "custom_components.panasonic_bluray.config_flow.PanasonicBlurayApi"
+        "custom_components.panasonic_bd.config_flow.PanasonicBlurayApi"
     ) as mock_api_class:
         mock_instance = MagicMock()
         mock_instance.async_test_connection = AsyncMock(return_value=True)
