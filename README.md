@@ -433,6 +433,165 @@ data:
 
 This is a known limitation of the player's network protocol. Commands may take 1-3 seconds to execute. Avoid sending rapid repeated commands.
 
+### Enabling Debug Logging
+
+If you're experiencing issues, enable debug logging to help diagnose problems:
+
+1. Add the following to your `configuration.yaml`:
+
+```yaml
+logger:
+  default: info
+  logs:
+    custom_components.panasonic_bd: debug
+```
+
+2. Restart Home Assistant
+
+3. Check the logs in **Settings** → **System** → **Logs**
+
+Debug logging will show:
+- API requests and responses
+- Player type detection
+- Command execution status
+- Coordinator updates and errors
+- Connection recovery events
+
+To reduce log verbosity after debugging, change `debug` to `info` or remove the entry.
+
+### Testing Player Connectivity
+
+Before installing the integration, you can test your player's connectivity using the included test script. This is useful for:
+- Verifying your player is reachable
+- Checking network subnet configuration
+- Testing commands before integrating with Home Assistant
+- Debugging connection issues
+
+#### Setup
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/Limecooler/panasonic_bd.git
+cd panasonic_bd
+```
+
+2. Copy the example configuration and add your player's IP:
+
+```bash
+cp .env.example .env
+# Edit .env and set PANASONIC_BD_HOST to your player's IP address
+```
+
+3. Install dependencies (if not already installed):
+
+```bash
+pip install aiohttp
+```
+
+#### Running the Test Script
+
+**Run all tests:**
+
+```bash
+python scripts/test_player.py
+```
+
+**Get player status only:**
+
+```bash
+python scripts/test_player.py --status
+```
+
+**Test sending commands (interactive):**
+
+```bash
+python scripts/test_player.py --commands
+```
+
+**Override IP from command line:**
+
+```bash
+python scripts/test_player.py --host 192.168.1.100
+```
+
+#### What the Test Script Checks
+
+1. **Ping Test**: Checks if the player is powered on or has Quick Start enabled
+2. **Network Validation**: Verifies the player IP is on the same subnet as your machine
+3. **Connection Test**: Confirms the player responds to HTTP requests
+4. **Player Detection**: Identifies whether you have a BD or UHD player
+5. **Status Retrieval**: Gets current playback state, position, and chapter info
+
+#### Example Output
+
+```
+============================================================
+           Panasonic Blu-ray Player Test
+============================================================
+
+[INFO] Player IP: 192.168.1.100
+
+============================================================
+                      Ping Test
+============================================================
+
+[INFO] Pinging 192.168.1.100...
+[PASS] Ping successful (1.2 ms)
+
+[INFO] The player is powered on or Quick Start is enabled.
+
+============================================================
+              Network Validation
+============================================================
+
+[INFO] Local IP addresses detected:
+       primary: 192.168.1.50
+
+[PASS] Player 192.168.1.100 is on same subnet as local 192.168.1.50
+
+============================================================
+               Connection Test
+============================================================
+
+[INFO] Testing connection to player...
+[PASS] Connection successful
+
+============================================================
+              Player Detection
+============================================================
+
+[INFO] Detecting player type...
+[PASS] Detected: BD Player (full status support)
+       Features: Extended status, chapters, duration
+
+============================================================
+               Player Status
+============================================================
+
+[INFO] Getting player status...
+[PASS] Status retrieved successfully
+       State: playing
+       Status: Playback
+       Position: 1234 seconds
+       Duration: 7200 seconds
+       Progress: 17.1%
+       Chapter: 3 / 24
+
+============================================================
+                Test Summary
+============================================================
+
+[PASS] Ping test passed
+[PASS] Connection test passed
+[PASS] Detection test passed
+[PASS] Status test passed
+
+All tests passed!
+
+Your player is ready to use with the Home Assistant integration.
+```
+
 ## Known Limitations
 
 1. **Same subnet required**: Player must be on same network subnet as Home Assistant

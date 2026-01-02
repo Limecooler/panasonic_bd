@@ -156,34 +156,43 @@ class PanasonicBlurayMediaPlayer(
         """Turn on the player (wake from standby)."""
         # If already on, do nothing
         if self.state not in (MediaPlayerState.OFF, None):
+            _LOGGER.debug("Turn on requested but player already on")
             return
+        _LOGGER.debug("Turning on %s", self.coordinator.device_name)
         await self.coordinator.async_send_command("POWER")
 
     async def async_turn_off(self) -> None:
         """Turn off the player (go to standby)."""
         # If already off, do nothing
         if self.state == MediaPlayerState.OFF:
+            _LOGGER.debug("Turn off requested but player already off")
             return
+        _LOGGER.debug("Turning off %s", self.coordinator.device_name)
         await self.coordinator.async_send_command("POWER")
 
     async def async_media_play(self) -> None:
         """Start playback."""
+        _LOGGER.debug("Starting playback on %s", self.coordinator.device_name)
         await self.coordinator.async_send_command("PLAYBACK")
 
     async def async_media_pause(self) -> None:
         """Pause playback."""
+        _LOGGER.debug("Pausing playback on %s", self.coordinator.device_name)
         await self.coordinator.async_send_command("PAUSE")
 
     async def async_media_stop(self) -> None:
         """Stop playback."""
+        _LOGGER.debug("Stopping playback on %s", self.coordinator.device_name)
         await self.coordinator.async_send_command("STOP")
 
     async def async_media_next_track(self) -> None:
         """Skip to next chapter."""
+        _LOGGER.debug("Skipping to next chapter on %s", self.coordinator.device_name)
         await self.coordinator.async_send_command("SKIPFWD")
 
     async def async_media_previous_track(self) -> None:
         """Skip to previous chapter."""
+        _LOGGER.debug("Skipping to previous chapter on %s", self.coordinator.device_name)
         await self.coordinator.async_send_command("SKIPREV")
 
     @callback

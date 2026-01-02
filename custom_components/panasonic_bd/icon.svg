@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <!-- Background circle (Blu-ray disc) -->
+  <circle cx="128" cy="128" r="120" fill="#0066CC"/>
+
+  <!-- Outer ring highlight -->
+  <circle cx="128" cy="128" r="120" fill="none" stroke="#4D94FF" stroke-width="4"/>
+
+  <!-- Data area ring -->
+  <circle cx="128" cy="128" r="95" fill="none" stroke="#003D7A" stroke-width="30"/>
+
+  <!-- Inner reflective area -->
+  <circle cx="128" cy="128" r="75" fill="#4D94FF" opacity="0.3"/>
+
+  <!-- Center hub -->
+  <circle cx="128" cy="128" r="25" fill="#1A1A1A"/>
+  <circle cx="128" cy="128" r="20" fill="#333333"/>
+  <circle cx="128" cy="128" r="8" fill="#1A1A1A"/>
+
+  <!-- Light reflection arc -->
+  <path d="M 60 80 Q 100 60 150 70" fill="none" stroke="white" stroke-width="8" stroke-linecap="round" opacity="0.4"/>
+
+  <!-- Panasonic blue accent -->
+  <circle cx="128" cy="128" r="115" fill="none" stroke="#0055AA" stroke-width="2" opacity="0.5"/>
+</svg>

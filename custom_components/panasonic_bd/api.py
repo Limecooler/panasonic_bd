@@ -223,6 +223,8 @@ class PanasonicBlurayApi:
         Returns:
             PlayerType.BD, PlayerType.UHD, or PlayerType.AUTO if unknown
         """
+        _LOGGER.debug("Detecting player type for %s", self._host)
+
         # Try to get status - BD players will respond
         status, data = await self._send_request(
             "cCMD_GET_STATUS.x=100&cCMD_GET_STATUS.y=100"
@@ -230,6 +232,7 @@ class PanasonicBlurayApi:
 
         if status == "ok" and data:
             self._player_type = PlayerType.BD
+            _LOGGER.debug("Detected BD player (extended status available)")
             return self._player_type
 
         # If status failed, try a simple command
@@ -241,9 +244,11 @@ class PanasonicBlurayApi:
         if status == "error":
             # Likely UHD without auth
             self._player_type = PlayerType.UHD
+            _LOGGER.debug("Detected UHD player (limited status, may need authentication)")
         elif status == "ok":
             # Could be UHD with auth or BD
             self._player_type = PlayerType.BD
+            _LOGGER.debug("Detected BD-compatible player")
 
         return self._player_type
 
@@ -261,6 +266,7 @@ class PanasonicBlurayApi:
         """
         command = command.upper()
         if command not in COMMANDS:
+            _LOGGER.warning("Unknown command requested: %s", command)
             return CommandResult(
                 success=False,
                 error=f"Unknown command: {command}"
@@ -273,15 +279,18 @@ class PanasonicBlurayApi:
             # If we're auto-detecting, this might indicate UHD
             if self._player_type == PlayerType.AUTO:
                 self._player_type = PlayerType.UHD
+            _LOGGER.debug("Command %s failed (player returned error)", command)
             return CommandResult(success=False, error="Command failed")
 
         if status == "off":
+            _LOGGER.debug("Command %s failed (device off or unreachable)", command)
             return CommandResult(success=False, error="Device is off or unreachable")
 
         # If we're auto-detecting and command succeeded, likely BD
         if self._player_type == PlayerType.AUTO:
             self._player_type = PlayerType.BD
 
+        _LOGGER.debug("Command %s executed successfully", command)
         return CommandResult(success=True)
 
     async def async_get_play_status(self) -> PlayStatus:

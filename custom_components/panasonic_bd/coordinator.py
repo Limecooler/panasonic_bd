@@ -68,8 +68,24 @@ class PanasonicBlurayCoordinator(DataUpdateCoordinator[PanasonicBlurayData]):
         try:
             play_status = await self.api.async_get_play_status()
 
+            # Log recovery if we had previous errors
+            if self._consecutive_errors > 0:
+                _LOGGER.info(
+                    "Connection to %s restored after %d failed attempt(s)",
+                    self.device_name,
+                    self._consecutive_errors,
+                )
+
             # Reset error counter on success
             self._consecutive_errors = 0
+
+            _LOGGER.debug(
+                "Updated %s: state=%s, position=%d, duration=%d",
+                self.device_name,
+                play_status.state,
+                play_status.position,
+                play_status.duration,
+            )
 
             return PanasonicBlurayData(
                 state=play_status.state,
@@ -126,8 +142,19 @@ class PanasonicBlurayCoordinator(DataUpdateCoordinator[PanasonicBlurayData]):
         Returns:
             True if command succeeded
         """
+        _LOGGER.debug("Sending command %s to %s", command, self.device_name)
         result = await self.api.async_send_command(command)
+
         if result.success:
+            _LOGGER.debug("Command %s succeeded for %s", command, self.device_name)
             # Trigger a refresh after command
             await self.async_request_refresh()
+        else:
+            _LOGGER.warning(
+                "Command %s failed for %s: %s",
+                command,
+                self.device_name,
+                result.error or "Unknown error",
+            )
+
         return result.success
