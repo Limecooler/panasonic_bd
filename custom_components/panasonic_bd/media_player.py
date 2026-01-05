@@ -22,13 +22,12 @@ from .coordinator import PanasonicBlurayCoordinator, PanasonicBlurayData
 _LOGGER = logging.getLogger(__name__)
 
 # Map internal states to MediaPlayerState
-# Note: "off" state is not used - connection failures result in UNAVAILABLE via coordinator
+# Note: Only known states are mapped. Unknown states result in UNAVAILABLE.
 STATE_MAP = {
     "standby": MediaPlayerState.STANDBY,  # Player responds but idle (standby or HOME menu)
     "stopped": MediaPlayerState.IDLE,  # Player has stopped playback
     "playing": MediaPlayerState.PLAYING,
     "paused": MediaPlayerState.PAUSED,
-    "unknown": MediaPlayerState.STANDBY,  # Default to STANDBY for unknown states
 }
 
 
@@ -97,11 +96,28 @@ class PanasonicBlurayMediaPlayer(
         )
 
     @property
+    def available(self) -> bool:
+        """Return True if entity is available.
+
+        Entity is unavailable when coordinator has no data or when
+        the player state is unknown/unmapped.
+        """
+        if self.coordinator.data is None:
+            return False
+        if self.coordinator.data.state not in STATE_MAP:
+            return False
+        return super().available
+
+    @property
     def state(self) -> MediaPlayerState | None:
         """Return the current state of the player."""
-        if self.coordinator.data is None:
+        if not self.available:
             return None
-        return STATE_MAP.get(self.coordinator.data.state, MediaPlayerState.STANDBY)
+        raw_state = self.coordinator.data.state
+        if raw_state not in STATE_MAP:
+            _LOGGER.warning("Unknown state from player: %s", raw_state)
+            return None
+        return STATE_MAP[raw_state]
 
     @property
     def media_position(self) -> int | None:

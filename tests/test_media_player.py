@@ -33,6 +33,7 @@ def mock_coordinator():
         media_position_updated_at=datetime.now(),
     )
     coordinator.device_name = "Living Room Blu-ray"
+    coordinator.last_update_success = True  # For CoordinatorEntity.available
     coordinator.async_send_command = AsyncMock()
     coordinator.async_request_refresh = AsyncMock()
     return coordinator
@@ -67,9 +68,9 @@ class TestStateMap:
         """Test paused state mapping."""
         assert STATE_MAP["paused"] == MediaPlayerState.PAUSED
 
-    def test_state_map_unknown(self):
-        """Test unknown state mapping defaults to STANDBY."""
-        assert STATE_MAP["unknown"] == MediaPlayerState.STANDBY
+    def test_unknown_not_in_state_map(self):
+        """Test unknown state is not in STATE_MAP (results in unavailable)."""
+        assert "unknown" not in STATE_MAP
 
 
 class TestMediaPlayerProperties:
@@ -88,16 +89,34 @@ class TestMediaPlayerProperties:
         assert device_info["name"] == "Living Room Blu-ray"
         assert device_info["manufacturer"] == "Panasonic"
 
+    def test_available_when_data_present(self, mock_coordinator, mock_entry):
+        """Test entity is available when coordinator has data."""
+        player = PanasonicBlurayMediaPlayer(mock_coordinator, mock_entry)
+        assert player.available is True
+
+    def test_unavailable_when_no_data(self, mock_coordinator, mock_entry):
+        """Test entity is unavailable when coordinator has no data."""
+        mock_coordinator.data = None
+        player = PanasonicBlurayMediaPlayer(mock_coordinator, mock_entry)
+        assert player.available is False
+
+    def test_unavailable_when_unknown_state(self, mock_coordinator, mock_entry):
+        """Test entity is unavailable when state is unknown."""
+        mock_coordinator.data.state = "unknown"
+        player = PanasonicBlurayMediaPlayer(mock_coordinator, mock_entry)
+        assert player.available is False
+
     def test_state_playing(self, mock_coordinator, mock_entry):
         """Test playing state."""
         player = PanasonicBlurayMediaPlayer(mock_coordinator, mock_entry)
         assert player.state == MediaPlayerState.PLAYING
 
-    def test_state_none_when_no_data(self, mock_coordinator, mock_entry):
-        """Test state is None when no data."""
+    def test_state_none_when_unavailable(self, mock_coordinator, mock_entry):
+        """Test state is None when entity is unavailable (no data)."""
         mock_coordinator.data = None
         player = PanasonicBlurayMediaPlayer(mock_coordinator, mock_entry)
         assert player.state is None
+        assert player.available is False
 
     def test_media_position(self, mock_coordinator, mock_entry):
         """Test media position."""
