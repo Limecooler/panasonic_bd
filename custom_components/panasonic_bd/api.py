@@ -308,14 +308,8 @@ class PanasonicBlurayApi:
         )
 
         if status == "off":
-            return PlayStatus(
-                state="off",
-                status_string=PlayerStatus.POWER_OFF.value,
-                position=0,
-                duration=0,
-                chapter_current=None,
-                chapter_total=None,
-            )
+            # Connection failed - raise exception so coordinator marks entity UNAVAILABLE
+            raise CannotConnect("Player is not responding (timeout or connection refused)")
 
         if status == "error" or not data:
             return PlayStatus(

@@ -19,7 +19,7 @@ _LOGGER = logging.getLogger(__name__)
 class PanasonicBlurayData:
     """Data class for Panasonic Blu-ray player state."""
 
-    state: str  # "off", "standby", "stopped", "playing", "paused", "unknown"
+    state: str  # "standby", "stopped", "playing", "paused", "unknown" (no "off" - use UNAVAILABLE)
     player_status: str  # Human-readable status (OpenHAB: player-status)
     media_position: int  # Playback position in seconds
     media_position_updated_at: datetime | None  # When position was last updated
@@ -117,20 +117,7 @@ class PanasonicBlurayCoordinator(DataUpdateCoordinator[PanasonicBlurayData]):
                     self.device_name,
                 )
 
-            # Return last known data if available, otherwise raise
-            if self.data is not None:
-                # Mark as unavailable but keep last known state
-                return PanasonicBlurayData(
-                    state="off",
-                    player_status="Unavailable",
-                    media_position=0,
-                    media_position_updated_at=None,
-                    media_duration=0,
-                    chapter_current=None,
-                    chapter_total=None,
-                    player_type=self.api.player_type,
-                )
-
+            # Always raise UpdateFailed - Home Assistant will mark entity as UNAVAILABLE
             raise UpdateFailed(f"Error communicating with device: {err}") from err
 
     async def async_send_command(self, command: str) -> bool:

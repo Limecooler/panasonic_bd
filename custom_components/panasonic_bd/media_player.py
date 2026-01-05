@@ -22,10 +22,10 @@ from .coordinator import PanasonicBlurayCoordinator, PanasonicBlurayData
 _LOGGER = logging.getLogger(__name__)
 
 # Map internal states to MediaPlayerState
+# Note: "off" state is not used - connection failures result in UNAVAILABLE via coordinator
 STATE_MAP = {
-    "off": MediaPlayerState.OFF,
-    "standby": MediaPlayerState.OFF,
-    "stopped": MediaPlayerState.IDLE,
+    "standby": MediaPlayerState.STANDBY,  # Player responds but idle (standby or HOME menu)
+    "stopped": MediaPlayerState.IDLE,  # Player has stopped playback
     "playing": MediaPlayerState.PLAYING,
     "paused": MediaPlayerState.PAUSED,
     "unknown": None,
@@ -154,19 +154,19 @@ class PanasonicBlurayMediaPlayer(
 
     async def async_turn_on(self) -> None:
         """Turn on the player (wake from standby)."""
-        # If already on, do nothing
-        if self.state not in (MediaPlayerState.OFF, None):
-            _LOGGER.debug("Turn on requested but player already on")
+        # If clearly on (playing/paused/idle), do nothing
+        if self.state in (MediaPlayerState.PLAYING, MediaPlayerState.PAUSED, MediaPlayerState.IDLE):
+            _LOGGER.debug("Turn on requested but player already on (state: %s)", self.state)
             return
+        # Send power command for STANDBY or unknown states
+        # Note: If entity is UNAVAILABLE, this won't be callable
         _LOGGER.debug("Turning on %s", self.coordinator.device_name)
         await self.coordinator.async_send_command("POWER")
 
     async def async_turn_off(self) -> None:
         """Turn off the player (go to standby)."""
-        # If already off, do nothing
-        if self.state == MediaPlayerState.OFF:
-            _LOGGER.debug("Turn off requested but player already off")
-            return
+        # Send power command - will toggle to standby
+        # Note: If entity is UNAVAILABLE, this won't be callable
         _LOGGER.debug("Turning off %s", self.coordinator.device_name)
         await self.coordinator.async_send_command("POWER")
 

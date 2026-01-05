@@ -7,7 +7,11 @@ player before integrating with Home Assistant.
 Usage:
     python scripts/test_player.py              # Run all tests
     python scripts/test_player.py --status     # Get player status only
+    python scripts/test_player.py --power      # Test power on/off cycling
+    python scripts/test_player.py --tray       # Test tray open/close
+    python scripts/test_player.py --monitor    # Continuous status monitoring
     python scripts/test_player.py --commands   # Test sending commands (interactive)
+    python scripts/test_player.py --debug      # Show raw HTTP protocol data
     python scripts/test_player.py --host IP    # Override IP from command line
 
 Configuration:
@@ -388,6 +392,310 @@ async def test_get_status(api: PanasonicBlurayApi) -> bool:
         return False
 
 
+async def test_power_cycle(api: PanasonicBlurayApi) -> bool:
+    """Test power on/off functionality using POWER toggle command.
+
+    Note: The player's status API does not distinguish between "standby" and
+    "powered on but idle" - both return state=0. Therefore, this test can only
+    verify that the POWER command is accepted by the player, not that the
+    power state actually changed. Visual confirmation is required.
+
+    Args:
+        api: The API client instance
+
+    Returns:
+        True if power commands were sent successfully
+    """
+    print_info("Testing power toggle functionality...")
+    print()
+    print_warning("IMPORTANT: The player's status API cannot distinguish between")
+    print("           'standby' and 'powered on idle' states. Both return state=0.")
+    print("           Visual confirmation of power state changes is required.")
+    print()
+
+    # Get initial state for reference
+    try:
+        initial_status = await api.async_get_play_status()
+        print_detail("Current reported state", initial_status.state)
+        print_detail("Current status string", initial_status.status_string)
+    except Exception as e:
+        print_failure(f"Could not get initial state: {e}")
+        return False
+
+    # Test 1: Send first POWER toggle
+    print()
+    print_info("Test 1: Sending POWER command (toggle)...")
+    result = await api.async_send_command("POWER")
+    if not result.success:
+        print_failure(f"Failed to send power command: {result.error}")
+        return False
+    print_success("POWER command accepted by player")
+    print_info("Please visually confirm the player toggled power state.")
+
+    # Wait a moment
+    print_info("Waiting 5 seconds...")
+    await asyncio.sleep(5)
+
+    # Check status (for informational purposes)
+    status = await api.async_get_play_status()
+    print_detail("Reported state after toggle", status.state)
+
+    # Test 2: Send second POWER toggle to return to original state
+    print()
+    print_info("Test 2: Sending POWER command again (toggle back)...")
+    result = await api.async_send_command("POWER")
+    if not result.success:
+        print_failure(f"Failed to send power command: {result.error}")
+        return False
+    print_success("POWER command accepted by player")
+    print_info("Please visually confirm the player toggled back.")
+
+    # Wait and check final status
+    print_info("Waiting 3 seconds...")
+    await asyncio.sleep(3)
+
+    final_status = await api.async_get_play_status()
+    print_detail("Final reported state", final_status.state)
+
+    print()
+    print_success("Power toggle test completed!")
+    print()
+    print_info("Summary:")
+    print("       - Both POWER commands were accepted by the player")
+    print("       - Status API limitation: cannot detect on/off state when idle")
+    print("       - The integration will show 'standby' even when player is on HOME menu")
+    print("       - State correctly changes to 'playing'/'paused' during playback")
+
+    return True
+
+
+async def test_tray(api: PanasonicBlurayApi) -> bool:
+    """Test tray open/close functionality.
+
+    This tests the OP_CL (open/close) command which physically opens and closes
+    the disc tray. This is a safe test that provides visual confirmation the
+    player is responding to commands.
+
+    Args:
+        api: The API client instance
+
+    Returns:
+        True if tray commands were sent successfully
+    """
+    print_info("Testing tray open/close functionality...")
+    print()
+    print_warning("This will physically open and close the disc tray.")
+    print_info("Please ensure there's clearance in front of the player.")
+    print()
+
+    # Test 1: Open tray
+    print_info("Opening tray...")
+    result = await api.async_send_command("OP_CL")
+    if not result.success:
+        print_failure(f"Failed to send tray command: {result.error}")
+        return False
+    print_success("OP_CL command accepted")
+    print_info("Please confirm the tray is opening...")
+
+    # Wait for tray to open
+    print_info("Waiting 5 seconds...")
+    await asyncio.sleep(5)
+
+    # Test 2: Close tray
+    print()
+    print_info("Closing tray...")
+    result = await api.async_send_command("OP_CL")
+    if not result.success:
+        print_failure(f"Failed to send tray command: {result.error}")
+        return False
+    print_success("OP_CL command accepted")
+    print_info("Please confirm the tray is closing...")
+
+    # Wait for tray to close
+    print_info("Waiting 3 seconds...")
+    await asyncio.sleep(3)
+
+    print()
+    print_success("Tray test completed!")
+    print()
+    print_info("If the tray opened and closed, the player is responding correctly")
+    print_info("to remote commands. The integration should work properly.")
+
+    return True
+
+
+async def test_debug_request(host: str, port: int = 80) -> bool:
+    """Send a raw HTTP request and display the full exchange.
+
+    This shows the actual HTTP protocol exchange for debugging purposes.
+    Useful when the player isn't responding as expected.
+
+    Args:
+        host: Player IP address
+        port: HTTP port (default 80)
+
+    Returns:
+        True if request completed (regardless of response)
+    """
+    import aiohttp
+
+    print_info("Raw HTTP protocol debug mode")
+    print()
+
+    url = f"http://{host}:{port}/WAN/dvdr/dvdr_ctrl.cgi"
+    data = "cCMD_PST.x=100&cCMD_PST.y=100"
+    headers = {
+        "User-Agent": "MEI-LAN-REMOTE-CALL",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+
+    print(f"{Colors.CYAN}━━━ REQUEST ━━━{Colors.ENDC}")
+    print(f"POST {url}")
+    for key, value in headers.items():
+        print(f"{key}: {value}")
+    print()
+    print(data)
+    print()
+
+    try:
+        timeout = aiohttp.ClientTimeout(total=10)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.post(url, data=data, headers=headers) as response:
+                print(f"{Colors.CYAN}━━━ RESPONSE ━━━{Colors.ENDC}")
+                print(f"HTTP {response.status} {response.reason}")
+                for key, value in response.headers.items():
+                    print(f"{key}: {value}")
+                print()
+
+                raw_bytes = await response.read()
+                print(f"{Colors.CYAN}━━━ BODY ({len(raw_bytes)} bytes) ━━━{Colors.ENDC}")
+
+                # Check for gzip
+                if len(raw_bytes) >= 2 and raw_bytes[0:2] == b'\x1f\x8b':
+                    print(f"{Colors.YELLOW}[gzip compressed]{Colors.ENDC}")
+                    import gzip
+                    try:
+                        raw_bytes = gzip.decompress(raw_bytes)
+                        print(f"{Colors.GREEN}[decompressed to {len(raw_bytes)} bytes]{Colors.ENDC}")
+                    except Exception as e:
+                        print(f"{Colors.RED}[decompression failed: {e}]{Colors.ENDC}")
+
+                # Show hex dump for first 64 bytes
+                print()
+                print(f"{Colors.BLUE}Hex:{Colors.ENDC}", end="")
+                for i, b in enumerate(raw_bytes[:64]):
+                    if i % 16 == 0:
+                        print()
+                        print(f"  {i:04x}: ", end="")
+                    print(f"{b:02x} ", end="")
+                if len(raw_bytes) > 64:
+                    print(f"\n  ... ({len(raw_bytes) - 64} more bytes)")
+                print()
+
+                # Show as text
+                print()
+                try:
+                    text = raw_bytes.decode("utf-8")
+                except UnicodeDecodeError:
+                    text = raw_bytes.decode("latin-1")
+
+                print(f"{Colors.BLUE}Text:{Colors.ENDC}")
+                for line in text.strip().split("\n")[:20]:
+                    print(f"  {line}")
+
+                print()
+                print_success("Debug request completed")
+                return True
+
+    except aiohttp.ClientError as e:
+        print(f"{Colors.RED}━━━ CONNECTION ERROR ━━━{Colors.ENDC}")
+        print(f"Error: {e}")
+        print()
+        print_failure("Could not connect to player")
+        return False
+    except asyncio.TimeoutError:
+        print(f"{Colors.RED}━━━ TIMEOUT ━━━{Colors.ENDC}")
+        print("Request timed out after 10 seconds")
+        print()
+        print_failure("Connection timed out")
+        return False
+
+
+async def test_monitor(api: PanasonicBlurayApi, interval: float = 2.0) -> bool:
+    """Continuously monitor player status.
+
+    This polls the player status at regular intervals and displays changes.
+    Useful for testing playback state transitions during actual disc playback.
+
+    Args:
+        api: The API client instance
+        interval: Polling interval in seconds
+
+    Returns:
+        True (always, unless interrupted)
+    """
+    print_info("Continuous status monitoring mode")
+    print()
+    print_info(f"Polling every {interval} seconds. Press Ctrl+C to stop.")
+    print()
+
+    last_state = None
+    last_position = None
+    poll_count = 0
+
+    try:
+        while True:
+            poll_count += 1
+            try:
+                status = await api.async_get_play_status()
+
+                # Format the status line
+                state_changed = last_state != status.state
+                position_str = f"{status.position}s"
+                if status.duration > 0:
+                    progress = (status.position / status.duration * 100)
+                    position_str = f"{status.position}/{status.duration}s ({progress:.1f}%)"
+
+                chapter_str = ""
+                if status.chapter_current is not None:
+                    chapter_str = f" Ch.{status.chapter_current}"
+                    if status.chapter_total:
+                        chapter_str = f" Ch.{status.chapter_current}/{status.chapter_total}"
+
+                # Use different colors based on state
+                if status.state == "playing":
+                    state_color = Colors.GREEN
+                elif status.state == "paused":
+                    state_color = Colors.YELLOW
+                elif status.state == "standby":
+                    state_color = Colors.CYAN
+                else:
+                    state_color = Colors.ENDC
+
+                # Print status (with state change indicator)
+                change_indicator = " *" if state_changed else ""
+                print(
+                    f"[{poll_count:4d}] "
+                    f"{state_color}{status.state:10}{Colors.ENDC} "
+                    f"| {position_str:20}{chapter_str}{change_indicator}"
+                )
+
+                last_state = status.state
+                last_position = status.position
+
+            except CannotConnect:
+                print(f"[{poll_count:4d}] {Colors.RED}UNAVAILABLE{Colors.ENDC} | Connection failed")
+            except Exception as e:
+                print(f"[{poll_count:4d}] {Colors.RED}ERROR{Colors.ENDC} | {e}")
+
+            await asyncio.sleep(interval)
+
+    except KeyboardInterrupt:
+        print()
+        print_info("Monitoring stopped.")
+        return True
+
+
 async def test_commands(api: PanasonicBlurayApi) -> bool:
     """Test sending commands to the player (interactive).
 
@@ -449,6 +757,10 @@ async def run_tests(
     host: str,
     player_key: str | None = None,
     status_only: bool = False,
+    test_power: bool = False,
+    test_tray_mode: bool = False,
+    test_monitor_mode: bool = False,
+    test_debug_mode: bool = False,
     test_cmds: bool = False,
 ) -> int:
     """Run the test suite.
@@ -457,6 +769,10 @@ async def run_tests(
         host: Player IP address
         player_key: Optional player key for UHD authentication
         status_only: Only get status, skip other tests
+        test_power: Test power on/off cycling
+        test_tray_mode: Test tray open/close
+        test_monitor_mode: Continuous status monitoring
+        test_debug_mode: Show raw HTTP protocol data
         test_cmds: Enable interactive command testing
 
     Returns:
@@ -469,6 +785,22 @@ async def run_tests(
     if player_key:
         print_info(f"Player Key: {'*' * 8}...{player_key[-4:]}")
     print()
+
+    # Special mode: Debug raw HTTP protocol
+    if test_debug_mode:
+        print_header("Raw HTTP Debug")
+        await test_debug_request(host)
+        return 0
+
+    # Special mode: Continuous monitoring (skips normal tests)
+    if test_monitor_mode:
+        api = PanasonicBlurayApi(host=host, player_key=player_key)
+        try:
+            print_header("Status Monitor")
+            await test_monitor(api)
+            return 0
+        finally:
+            await api.close()
 
     # Test 0: Ping test (first check)
     print_header("Ping Test")
@@ -504,7 +836,7 @@ async def run_tests(
     api = PanasonicBlurayApi(host=host, player_key=player_key)
 
     try:
-        results = {"ping": ping_success, "connection": False, "detection": False, "status": False}
+        results = {"ping": ping_success, "connection": False, "status": False}
 
         # Test 1: Connection
         print_header("Connection Test")
@@ -521,7 +853,7 @@ async def run_tests(
             print("  4. Ensure no firewall is blocking port 80")
             return 1
 
-        # Test 2: Player Detection
+        # Test 2: Player Detection (skipped in status-only mode)
         if not status_only:
             print_header("Player Detection")
             player_type = await test_player_detection(api)
@@ -531,7 +863,17 @@ async def run_tests(
         print_header("Player Status")
         results["status"] = await test_get_status(api)
 
-        # Test 4: Commands (optional, interactive)
+        # Test 4: Power cycle (optional)
+        if test_power:
+            print_header("Power Cycle Test")
+            results["power"] = await test_power_cycle(api)
+
+        # Test 5: Tray test (optional)
+        if test_tray_mode:
+            print_header("Tray Open/Close Test")
+            results["tray"] = await test_tray(api)
+
+        # Test 6: Commands (optional, interactive)
         if test_cmds:
             print_header("Command Testing")
             await test_commands(api)
@@ -575,7 +917,11 @@ def main() -> int:
 Examples:
   python scripts/test_player.py                    Run all tests
   python scripts/test_player.py --status           Get player status only
-  python scripts/test_player.py --commands         Test sending commands
+  python scripts/test_player.py --power            Test power on/off cycling
+  python scripts/test_player.py --tray             Test disc tray open/close
+  python scripts/test_player.py --monitor          Continuous status monitoring
+  python scripts/test_player.py --debug            Show raw HTTP protocol data
+  python scripts/test_player.py --commands         Interactive command testing
   python scripts/test_player.py --host 192.168.1.50  Use specific IP
 
 Configuration:
@@ -598,6 +944,30 @@ Configuration:
         "-s",
         action="store_true",
         help="Only get player status, skip other tests",
+    )
+    parser.add_argument(
+        "--power",
+        "-p",
+        action="store_true",
+        help="Test power on/off cycling",
+    )
+    parser.add_argument(
+        "--tray",
+        "-t",
+        action="store_true",
+        help="Test disc tray open/close (physically verifiable)",
+    )
+    parser.add_argument(
+        "--monitor",
+        "-m",
+        action="store_true",
+        help="Continuous status monitoring (Ctrl+C to stop)",
+    )
+    parser.add_argument(
+        "--debug",
+        "-d",
+        action="store_true",
+        help="Show raw HTTP protocol exchange for debugging",
     )
     parser.add_argument(
         "--commands",
@@ -636,6 +1006,10 @@ Configuration:
             host=host,
             player_key=player_key,
             status_only=args.status,
+            test_power=args.power,
+            test_tray_mode=args.tray,
+            test_monitor_mode=args.monitor,
+            test_debug_mode=args.debug,
             test_cmds=args.commands,
         )
     )
