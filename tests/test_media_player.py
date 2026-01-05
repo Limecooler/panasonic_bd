@@ -53,8 +53,8 @@ class TestStateMap:
     """Test state mapping."""
 
     def test_state_map_standby(self):
-        """Test standby state mapping."""
-        assert STATE_MAP["standby"] == MediaPlayerState.STANDBY
+        """Test standby state mapping (uses IDLE since STANDBY is deprecated)."""
+        assert STATE_MAP["standby"] == MediaPlayerState.IDLE
 
     def test_state_map_stopped(self):
         """Test stopped state mapping."""
