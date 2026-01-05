@@ -51,13 +51,9 @@ def mock_entry():
 class TestStateMap:
     """Test state mapping."""
 
-    def test_state_map_off(self):
-        """Test off state mapping."""
-        assert STATE_MAP["off"] == MediaPlayerState.OFF
-
     def test_state_map_standby(self):
         """Test standby state mapping."""
-        assert STATE_MAP["standby"] == MediaPlayerState.OFF
+        assert STATE_MAP["standby"] == MediaPlayerState.STANDBY
 
     def test_state_map_stopped(self):
         """Test stopped state mapping."""
@@ -70,6 +66,10 @@ class TestStateMap:
     def test_state_map_paused(self):
         """Test paused state mapping."""
         assert STATE_MAP["paused"] == MediaPlayerState.PAUSED
+
+    def test_state_map_unknown(self):
+        """Test unknown state mapping defaults to STANDBY."""
+        assert STATE_MAP["unknown"] == MediaPlayerState.STANDBY
 
 
 class TestMediaPlayerProperties:
@@ -155,8 +155,8 @@ class TestMediaPlayerActions:
     """Test media player actions."""
 
     async def test_turn_on(self, mock_coordinator, mock_entry):
-        """Test turn on."""
-        mock_coordinator.data.state = "off"
+        """Test turn on from standby."""
+        mock_coordinator.data.state = "standby"
         player = PanasonicBlurayMediaPlayer(mock_coordinator, mock_entry)
         await player.async_turn_on()
         mock_coordinator.async_send_command.assert_called_once_with("POWER")
@@ -175,12 +175,13 @@ class TestMediaPlayerActions:
         await player.async_turn_off()
         mock_coordinator.async_send_command.assert_called_once_with("POWER")
 
-    async def test_turn_off_already_off(self, mock_coordinator, mock_entry):
-        """Test turn off when already off does nothing."""
-        mock_coordinator.data.state = "off"
+    async def test_turn_off_already_standby(self, mock_coordinator, mock_entry):
+        """Test turn off when in standby sends POWER to ensure standby."""
+        mock_coordinator.data.state = "standby"
         player = PanasonicBlurayMediaPlayer(mock_coordinator, mock_entry)
         await player.async_turn_off()
-        mock_coordinator.async_send_command.assert_not_called()
+        # POWER is still sent since we can't distinguish standby from powered-on-idle
+        mock_coordinator.async_send_command.assert_called_once_with("POWER")
 
     async def test_media_play(self, mock_coordinator, mock_entry):
         """Test play."""

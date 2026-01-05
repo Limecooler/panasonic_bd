@@ -28,7 +28,7 @@ STATE_MAP = {
     "stopped": MediaPlayerState.IDLE,  # Player has stopped playback
     "playing": MediaPlayerState.PLAYING,
     "paused": MediaPlayerState.PAUSED,
-    "unknown": None,
+    "unknown": MediaPlayerState.STANDBY,  # Default to STANDBY for unknown states
 }
 
 
@@ -101,7 +101,7 @@ class PanasonicBlurayMediaPlayer(
         """Return the current state of the player."""
         if self.coordinator.data is None:
             return None
-        return STATE_MAP.get(self.coordinator.data.state, None)
+        return STATE_MAP.get(self.coordinator.data.state, MediaPlayerState.STANDBY)
 
     @property
     def media_position(self) -> int | None:
