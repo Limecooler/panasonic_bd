@@ -153,6 +153,78 @@ UHD_COMMANDS: Final[set[str]] = {
 # All supported commands
 COMMANDS: Final[set[str]] = BD_COMMANDS | UHD_COMMANDS
 
+# Command aliases - map intuitive names to Panasonic-specific commands
+# Users can use either the alias or the native command name
+COMMAND_ALIASES: Final[dict[str, str]] = {
+    # Playback
+    "play": "PLAYBACK",
+    "fast_forward": "CUE",
+    "ff": "CUE",
+    "forward": "CUE",
+    "rewind": "REV",
+    "rw": "REV",
+    "reverse": "REV",
+    "next": "SKIPFWD",
+    "skip": "SKIPFWD",
+    "next_chapter": "SKIPFWD",
+    "previous": "SKIPREV",
+    "prev": "SKIPREV",
+    "previous_chapter": "SKIPREV",
+    "skip_forward": "MNSKIP",  # +60 seconds
+    "skip_back": "MNBACK",  # -10 seconds
+    # Navigation
+    "ok": "SELECT",
+    "enter": "SELECT",
+    "confirm": "SELECT",
+    "back": "RETURN",
+    "home": "MLTNAVI",
+    "main_menu": "MLTNAVI",
+    "popup": "PUPMENU",
+    "popup_menu": "PUPMENU",
+    "top_menu": "TITLE",
+    "disc_menu": "MENU",
+    "settings": "SETUP",
+    "info": "DSPSEL",
+    "display": "DSPSEL",
+    "status": "DSPSEL",
+    # Tray
+    "eject": "OP_CL",
+    "open": "OP_CL",
+    "close": "OP_CL",
+    "tray": "OP_CL",
+    # Power
+    "power_on": "POWERON",
+    "power_off": "POWEROFF",
+    # Audio/Subtitles
+    "subtitles": "TITLEONOFF",
+    "subs": "TITLEONOFF",
+    "subtitle_toggle": "TITLEONOFF",
+    "audio": "AUDIOSEL",
+    "audio_track": "AUDIOSEL",
+    "captions": "CLOSED_CAPTION",
+    "cc": "CLOSED_CAPTION",
+    # Numbers (for chapter entry)
+    "0": "D0",
+    "1": "D1",
+    "2": "D2",
+    "3": "D3",
+    "4": "D4",
+    "5": "D5",
+    "6": "D6",
+    "7": "D7",
+    "8": "D8",
+    "9": "D9",
+    "12": "D12",
+    "cancel": "CLEAR",
+    # Apps
+    "netflix": "NETFLIX",
+    # Frame control
+    "frame_back": "JLEFT",
+    "frame_forward": "JRIGHT",
+    "step_back": "JLEFT",
+    "step_forward": "JRIGHT",
+}
+
 # Command descriptions for documentation
 COMMAND_DESCRIPTIONS: Final[dict[str, str]] = {
     # Power

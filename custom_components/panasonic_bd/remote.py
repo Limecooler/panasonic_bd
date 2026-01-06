@@ -19,7 +19,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import COMMANDS, COMMAND_DESCRIPTIONS, DOMAIN
+from .const import COMMANDS, COMMAND_ALIASES, COMMAND_DESCRIPTIONS, DOMAIN
 from .coordinator import PanasonicBlurayCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -93,12 +93,34 @@ class PanasonicBlurayRemote(
         """Return extra state attributes including available commands."""
         attrs: dict[str, Any] = {
             "available_commands": sorted(COMMANDS),
+            "available_aliases": sorted(COMMAND_ALIASES.keys()),
         }
 
         if self.coordinator.data is not None:
             attrs["player_type"] = self.coordinator.data.player_type.value
 
         return attrs
+
+    def _resolve_command(self, cmd: str) -> str | None:
+        """Resolve command or alias to actual command.
+
+        Args:
+            cmd: Command name or alias
+
+        Returns:
+            Resolved command name, or None if not found
+        """
+        # Check direct command (case-insensitive)
+        cmd_upper = cmd.upper()
+        if cmd_upper in COMMANDS:
+            return cmd_upper
+
+        # Check alias (case-insensitive)
+        cmd_lower = cmd.lower()
+        if cmd_lower in COMMAND_ALIASES:
+            return COMMAND_ALIASES[cmd_lower]
+
+        return None
 
     async def async_turn_on(self, activity: str | None = None, **kwargs: Any) -> None:
         """Turn on the device.
@@ -121,8 +143,11 @@ class PanasonicBlurayRemote(
     async def async_send_command(self, command: Iterable[str], **kwargs: Any) -> None:
         """Send commands to the device.
 
+        Supports both native Panasonic commands (e.g., "PLAYBACK") and
+        intuitive aliases (e.g., "play"). Commands are case-insensitive.
+
         Args:
-            command: List of commands to send
+            command: List of commands or aliases to send
             **kwargs: Additional arguments (num_repeats, delay_secs)
         """
         num_repeats = kwargs.get(ATTR_NUM_REPEATS, 1)
@@ -130,23 +155,23 @@ class PanasonicBlurayRemote(
 
         for _ in range(num_repeats):
             for cmd in command:
-                cmd_upper = cmd.upper()
+                resolved_cmd = self._resolve_command(cmd)
 
-                if cmd_upper not in COMMANDS:
+                if resolved_cmd is None:
                     _LOGGER.warning(
-                        "Unknown command: %s. Available commands: %s",
+                        "Unknown command or alias: %s. Use 'available_commands' or "
+                        "'available_aliases' attributes to see valid options.",
                         cmd,
-                        ", ".join(sorted(COMMANDS)),
                     )
                     continue
 
-                _LOGGER.debug("Sending command: %s", cmd_upper)
-                result = await self.coordinator.api.async_send_command(cmd_upper)
+                _LOGGER.debug("Sending command: %s (from: %s)", resolved_cmd, cmd)
+                result = await self.coordinator.api.async_send_command(resolved_cmd)
 
                 if not result.success:
                     _LOGGER.warning(
                         "Command %s failed: %s",
-                        cmd_upper,
+                        resolved_cmd,
                         result.error or "Unknown error",
                     )
 

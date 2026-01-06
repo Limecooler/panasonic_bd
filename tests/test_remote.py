@@ -8,7 +8,7 @@ import pytest
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.panasonic_bd.const import DOMAIN, COMMANDS, PlayerType
+from custom_components.panasonic_bd.const import DOMAIN, COMMANDS, COMMAND_ALIASES, PlayerType
 from custom_components.panasonic_bd.coordinator import PanasonicBlurayData
 from custom_components.panasonic_bd.remote import PanasonicBlurayRemote
 from custom_components.panasonic_bd.api import CommandResult
@@ -107,9 +107,12 @@ class TestRemoteProperties:
         remote = PanasonicBlurayRemote(mock_coordinator, mock_entry)
         attrs = remote.extra_state_attributes
         assert "available_commands" in attrs
+        assert "available_aliases" in attrs
         assert attrs["player_type"] == "bd"
         assert "POWER" in attrs["available_commands"]
         assert "PLAYBACK" in attrs["available_commands"]
+        assert "play" in attrs["available_aliases"]
+        assert "eject" in attrs["available_aliases"]
 
 
 class TestRemoteActions:
@@ -159,6 +162,38 @@ class TestRemoteActions:
         remote = PanasonicBlurayRemote(mock_coordinator, mock_entry)
         await remote.async_send_command(["UNKNOWN_CMD"])
         mock_coordinator.api.async_send_command.assert_not_called()
+
+    async def test_send_command_via_alias(self, mock_coordinator, mock_entry):
+        """Test sending command via alias."""
+        remote = PanasonicBlurayRemote(mock_coordinator, mock_entry)
+        await remote.async_send_command(["play"])
+        mock_coordinator.api.async_send_command.assert_called_once_with("PLAYBACK")
+
+    async def test_send_command_via_alias_case_insensitive(self, mock_coordinator, mock_entry):
+        """Test aliases are case insensitive."""
+        remote = PanasonicBlurayRemote(mock_coordinator, mock_entry)
+        await remote.async_send_command(["PLAY"])
+        # Alias lookup is lowercase, so PLAY doesn't match "play" alias
+        # but it's not a valid native command either, so it's resolved by alias
+        mock_coordinator.api.async_send_command.assert_called_once_with("PLAYBACK")
+
+    async def test_send_eject_alias(self, mock_coordinator, mock_entry):
+        """Test eject alias sends OP_CL."""
+        remote = PanasonicBlurayRemote(mock_coordinator, mock_entry)
+        await remote.async_send_command(["eject"])
+        mock_coordinator.api.async_send_command.assert_called_once_with("OP_CL")
+
+    async def test_send_fast_forward_alias(self, mock_coordinator, mock_entry):
+        """Test fast forward alias sends CUE."""
+        remote = PanasonicBlurayRemote(mock_coordinator, mock_entry)
+        await remote.async_send_command(["ff"])
+        mock_coordinator.api.async_send_command.assert_called_once_with("CUE")
+
+    async def test_send_number_alias(self, mock_coordinator, mock_entry):
+        """Test number alias sends D# command."""
+        remote = PanasonicBlurayRemote(mock_coordinator, mock_entry)
+        await remote.async_send_command(["5"])
+        mock_coordinator.api.async_send_command.assert_called_once_with("D5")
 
     async def test_send_command_failure_logged(self, mock_coordinator, mock_entry):
         """Test command failures are logged."""
@@ -225,3 +260,60 @@ class TestRemoteCallback:
         remote._handle_coordinator_update()
 
         remote.async_write_ha_state.assert_called_once()
+
+
+class TestCommandAliases:
+    """Test command alias mappings."""
+
+    def test_all_aliases_map_to_valid_commands(self):
+        """Test all aliases map to commands in COMMANDS set."""
+        for alias, command in COMMAND_ALIASES.items():
+            assert command in COMMANDS, f"Alias '{alias}' maps to invalid command '{command}'"
+
+    def test_playback_aliases(self):
+        """Test playback-related aliases."""
+        assert COMMAND_ALIASES["play"] == "PLAYBACK"
+        assert COMMAND_ALIASES["ff"] == "CUE"
+        assert COMMAND_ALIASES["fast_forward"] == "CUE"
+        assert COMMAND_ALIASES["rewind"] == "REV"
+        assert COMMAND_ALIASES["rw"] == "REV"
+        assert COMMAND_ALIASES["next"] == "SKIPFWD"
+        assert COMMAND_ALIASES["previous"] == "SKIPREV"
+
+    def test_navigation_aliases(self):
+        """Test navigation aliases."""
+        assert COMMAND_ALIASES["ok"] == "SELECT"
+        assert COMMAND_ALIASES["enter"] == "SELECT"
+        assert COMMAND_ALIASES["back"] == "RETURN"
+        assert COMMAND_ALIASES["home"] == "MLTNAVI"
+
+    def test_tray_aliases(self):
+        """Test tray aliases."""
+        assert COMMAND_ALIASES["eject"] == "OP_CL"
+        assert COMMAND_ALIASES["open"] == "OP_CL"
+        assert COMMAND_ALIASES["close"] == "OP_CL"
+
+    def test_number_aliases(self):
+        """Test number aliases."""
+        for i in range(10):
+            assert COMMAND_ALIASES[str(i)] == f"D{i}"
+
+    def test_resolve_command_direct(self, mock_coordinator, mock_entry):
+        """Test _resolve_command with direct command."""
+        remote = PanasonicBlurayRemote(mock_coordinator, mock_entry)
+        assert remote._resolve_command("POWER") == "POWER"
+        assert remote._resolve_command("power") == "POWER"
+        assert remote._resolve_command("PoWeR") == "POWER"
+
+    def test_resolve_command_alias(self, mock_coordinator, mock_entry):
+        """Test _resolve_command with alias."""
+        remote = PanasonicBlurayRemote(mock_coordinator, mock_entry)
+        assert remote._resolve_command("play") == "PLAYBACK"
+        assert remote._resolve_command("PLAY") == "PLAYBACK"
+        assert remote._resolve_command("eject") == "OP_CL"
+
+    def test_resolve_command_unknown(self, mock_coordinator, mock_entry):
+        """Test _resolve_command with unknown command."""
+        remote = PanasonicBlurayRemote(mock_coordinator, mock_entry)
+        assert remote._resolve_command("invalid_cmd") is None
+        assert remote._resolve_command("notacommand") is None

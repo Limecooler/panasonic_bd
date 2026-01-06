@@ -9,8 +9,31 @@ from homeassistant.config_entries import ConfigEntryState
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from homeassistant.const import Platform
+
+from custom_components.panasonic_bd import PLATFORMS
 from custom_components.panasonic_bd.const import DOMAIN, PlayerType
 from custom_components.panasonic_bd.coordinator import PanasonicBlurayData
+
+
+class TestPlatforms:
+    """Test platform registration."""
+
+    def test_platforms_include_media_player(self):
+        """Test PLATFORMS includes media_player."""
+        assert Platform.MEDIA_PLAYER in PLATFORMS
+
+    def test_platforms_include_remote(self):
+        """Test PLATFORMS includes remote."""
+        assert Platform.REMOTE in PLATFORMS
+
+    def test_platforms_include_button(self):
+        """Test PLATFORMS includes button."""
+        assert Platform.BUTTON in PLATFORMS
+
+    def test_platforms_count(self):
+        """Test PLATFORMS has expected number of platforms."""
+        assert len(PLATFORMS) == 3
 
 
 @pytest.fixture(autouse=True)

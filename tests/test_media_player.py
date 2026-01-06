@@ -232,6 +232,10 @@ class TestMediaPlayerActions:
         await player.async_media_previous_track()
         mock_coordinator.async_send_command.assert_called_once_with("SKIPREV")
 
+    # Note: Fast forward/rewind are available via remote entity with
+    # "ff"/"rewind" aliases or "CUE"/"REV" commands. MediaPlayerEntity
+    # doesn't have FAST_FORWARD/REWIND features.
+
 
 class TestMediaPlayerCallback:
     """Test coordinator update callback."""

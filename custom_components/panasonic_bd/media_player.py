@@ -58,6 +58,8 @@ class PanasonicBlurayMediaPlayer(
 
     _attr_has_entity_name = True
     _attr_name = None  # Use device name as entity name
+    # Note: FAST_FORWARD and REWIND are not standard MediaPlayerEntityFeature values.
+    # Use the remote entity with "ff"/"rewind" aliases or "CUE"/"REV" commands instead.
     _attr_supported_features = (
         MediaPlayerEntityFeature.TURN_ON
         | MediaPlayerEntityFeature.TURN_OFF
